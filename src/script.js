@@ -1,3 +1,8 @@
+/* This file is part of Drag-and-Drop Taskboard
+
+Drag-and-Drop Taskboard is licensed under the GNU General Public License v3. 
+See the LICENSE file for details. */
+
 const defaultColumnIds = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -11,6 +16,63 @@ document.addEventListener("DOMContentLoaded", function() {
     
     document.querySelectorAll('.column').forEach(addColumnGlow);
 });
+
+function showOnHover(event) {
+    const column = event.target.closest('.column');
+    const task = event.target.closest('.task');
+
+    if (task) {
+        const saveBtn = task.querySelector('.save-btn');
+        const editBtn = task.querySelector('.edit-btn');
+        const deleteBtn = task.querySelector('.delete-btn');
+
+        if (task.querySelector('.edit-input') && saveBtn) {
+            saveBtn.style.display = 'inline-block';
+        }
+        else if (editBtn) {
+            editBtn.style.display = 'inline-block';
+        }
+
+        if (deleteBtn) {
+            deleteBtn.style.display = 'inline-block';
+        }
+    }
+    
+    if (column) {
+        const swapLeftButton = column.querySelector('.move-column-left');
+        const swapRightButton = column.querySelector('.move-column-right');
+        const deleteColumnButton = column.querySelector('.delete-column-btn');
+
+        if (swapLeftButton) swapLeftButton.style.display = 'flex';
+        if (swapRightButton) swapRightButton.style.display = 'flex';
+        if (deleteColumnButton) deleteColumnButton.style.display = 'flex';
+    }
+}
+
+function hideAfterHover(event) {
+    const column = event.target.closest('.column');
+    const task = event.target.closest('.task');
+    
+    if (task) {
+        const saveBtn = task.querySelector('.save-btn');
+        const editBtn = task.querySelector('.edit-btn');
+        const deleteBtn = task.querySelector('.delete-btn');
+
+        if (saveBtn) saveBtn.style.display = 'none';
+        if (editBtn) editBtn.style.display = 'none';
+        if (deleteBtn) deleteBtn.style.display = 'none';
+    }
+
+    if (column) {
+        const swapLeftButton = column.querySelector('.move-column-left');
+        const swapRightButton = column.querySelector('.move-column-right');
+        const deleteColumnButton = column.querySelector('.delete-column-btn');
+
+        if (swapLeftButton) swapLeftButton.style.display = 'none';
+        if (swapRightButton) swapRightButton.style.display = 'none';
+        if (deleteColumnButton) deleteColumnButton.style.display = 'none';
+    }
+}
 
 function showPanel() {
     document.getElementById('control-panel').classList.add('show-panel');
@@ -91,6 +153,64 @@ function addColumnGlow(column) {
     });
 }
 
+let isCurrentlySwapping = false;
+
+function swapColumns(column1, column2) {
+    if (isCurrentlySwapping) return;
+    isCurrentlySwapping = true;
+
+    const container = column1.parentNode;
+
+    const column1Rect = column1.getBoundingClientRect();
+    const column2Rect = column2.getBoundingClientRect();
+
+    const distance = column2Rect.left - column1Rect.left;
+
+    column1.style.transition = 'transform 0.4s ease';
+    column2.style.transition = 'transform 0.4s ease';
+
+    column1.style.transform = `translateX(${distance}px)`;
+    column2.style.transform = `translateX(${-distance}px)`;
+
+    setTimeout(function() {
+        column1.style.transition = '';
+        column2.style.transition = '';
+        column1.style.transform = '';
+        column2.style.transform = '';
+
+        if (column1.nextElementSibling === column2) {
+            container.insertBefore(column2, column1);
+        }
+        else {
+            container.insertBefore(column1, column2);
+        }
+
+        column1.dispatchEvent(new Event('mouseout'));
+        column1.dispatchEvent(new Event('mouseleave'));
+
+        saveColumnsToLocalStorage();
+        isCurrentlySwapping = false;
+    }, 400);
+}
+
+function swapLeft() {
+    const currentColumn = this.closest('.column');
+    const prevColumn = currentColumn.previousElementSibling;
+
+    if (prevColumn && prevColumn.classList.contains('column') && !prevColumn.classList.contains('add-column')) {
+        swapColumns(currentColumn, prevColumn);
+    }
+}
+
+function swapRight() {
+    const currentColumn = this.closest('.column');
+    const nextColumn = currentColumn.nextElementSibling;
+    
+    if (nextColumn && nextColumn.classList.contains('column') && !nextColumn.classList.contains('add-column')) {
+        swapColumns(nextColumn, currentColumn);
+    }
+}
+
 function addTask(columnId) {
     const input = document.getElementById(`${columnId}-input`);
     const taskText = input.value.trim();
@@ -118,7 +238,12 @@ function addTask(columnId) {
         editBtn.onclick = function () {
             editTask(saveBtn, editBtn, taskContent, columnId);
         };
-        editBtn.style.display = 'inline-block';
+        if (navigator.maxTouchPoints > 0) {
+            editBtn.style.display = 'inline-block';
+        }
+        else {
+            editBtn.style.display = 'none';
+        }
 
         const deleteBtn = document.createElement("button");
         deleteBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
@@ -127,7 +252,12 @@ function addTask(columnId) {
             newTask.parentElement.removeChild(newTask);
             saveTasks(columnId);
         };
-        deleteBtn.style.display = 'inline-block';
+        if (navigator.maxTouchPoints > 0) {
+            deleteBtn.style.display = 'inline-block';
+        }
+        else {
+            deleteBtn.style.display = 'none';
+        }
 
         newTask.appendChild(taskContent);
         newTask.appendChild(saveBtn);
@@ -163,6 +293,9 @@ function editTask(saveBtn, editBtn, taskContent, columnId) {
         if (event.key === "Enter") {
             saveTask(saveBtn, editBtn, taskContent, inputField.value.trim(), columnId);
             event.preventDefault();
+            if (saveBtn.style.display === 'none') {
+                editBtn.style.display = 'none';
+            }
         }
     });
 }
@@ -214,7 +347,12 @@ function loadTasks(columnId) {
         editBtn.onclick = function () {
             editTask(saveBtn, editBtn, taskContent, columnId);
         };
-        editBtn.style.display = 'inline-block';
+        if (navigator.maxTouchPoints > 0) {
+            editBtn.style.display = 'inline-block';
+        }
+        else {
+            editBtn.style.display = 'none';
+        }
 
         const deleteBtn = document.createElement("button");
         deleteBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
@@ -223,7 +361,12 @@ function loadTasks(columnId) {
             newTask.parentElement.removeChild(newTask);
             saveTasks(columnId);
         };
-        deleteBtn.style.display = 'inline-block';
+        if (navigator.maxTouchPoints > 0) {
+            deleteBtn.style.display = 'inline-block';
+        }
+        else {
+            deleteBtn.style.display = 'none';
+        }
 
         newTask.appendChild(taskContent);
         newTask.appendChild(saveBtn);
@@ -269,7 +412,11 @@ function createColumnElement(columnId, columnTitle) {
     newColumn.setAttribute('id', columnId);
 
     newColumn.innerHTML = `
-        <h2>${columnTitle}</h2>
+        <div class="column-header">
+            <button class="move-column-left"><i class="fa-solid fa-arrow-left"></i></button>
+            <h2 id="column-title">${columnTitle}</h2>
+            <button class="move-column-right"><i class="fa-solid fa-arrow-right"></i></button>
+        </div>
         <button class="delete-column-btn" onclick="deleteColumn('${columnId}')"><i class="fa-solid fa-xmark"></i></button>
         <div class="task-list" id="${columnId}-tasks" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
         <input type="text" placeholder="New task..." id="${columnId}-input" onkeypress="handleKeyPress(event, '${columnId}')">
@@ -277,6 +424,19 @@ function createColumnElement(columnId, columnTitle) {
     `;
 
     document.getElementById('task-board').insertBefore(newColumn, document.getElementById('add-column'));
+
+    if (navigator.maxTouchPoints > 0) {
+        newColumn.querySelector('.move-column-right').style.display = 'flex';
+        newColumn.querySelector('.move-column-left').style.display = 'flex';
+        newColumn.querySelector('.delete-column-btn').style.display = 'flex';
+    }
+    else {
+        newColumn.addEventListener('mouseover', showOnHover);
+        newColumn.addEventListener('mouseout', hideAfterHover);
+    }
+
+    newColumn.querySelector('.move-column-right').addEventListener('click', swapRight);
+    newColumn.querySelector('.move-column-left').addEventListener('click', swapLeft);
 
     addColumnGlow(newColumn);
 

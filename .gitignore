@@ -1,0 +1,5 @@
+# Extras and deprecated files
+other-files/
+
+# Server files
+server-specific/

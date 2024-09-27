@@ -1,3 +1,8 @@
+/* This file is part of Drag-and-Drop Taskboard
+
+Drag-and-Drop Taskboard is licensed under the GNU General Public License v3. 
+See the LICENSE file for details. */
+
 @font-face {
     font-family: 'itim';
     src: url('itim/Itim-Regular.ttf') format('truetype');
@@ -81,6 +86,38 @@ a, a:visited, a:hover, a:active {
     scrollbar-color: #555 #333;
 }
 
+.column-header {
+    display: flex;
+    justify-content: center;
+}
+
+.move-column-left,
+.move-column-right {
+    background: none;
+    color: #000;
+    border: none;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    padding: 0;
+    margin: 5px;
+    line-height: 10px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    line-height: 0;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+#column-title {
+    padding-left: 0.35rem;
+    padding-right: 0.35rem;
+    padding-top: 0.15rem;
+    word-break: break-all;
+}
+
 .column {
     min-height: calc(50vh);
     min-width: 15rem;
@@ -143,7 +180,7 @@ h2 {
     width: 20px;
     height: 20px;
     cursor: pointer;
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     font-size: 16px;
@@ -161,7 +198,7 @@ h2 {
     padding: 5px;
     border: 1px dashed #cccccc;
     border-radius: 4px;
-    background-color: #d2eef075;
+    background-color: #d2eef096;
 }
 
 .task {
@@ -169,6 +206,7 @@ h2 {
     margin: 5px 0;
     padding: 8px;
     border-radius: 4px;
+    min-height: 1.5rem;
     display: flex;
     justify-content: space-between;
     word-break: break-word;
